@@ -6,6 +6,7 @@ const port = 3000;
 
 app.use(express.static("public"));
 app.use(express.json());
+app.use(express.text());
 app.use("/", router);
 
 app.listen(port, () => {

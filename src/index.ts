@@ -7,31 +7,33 @@ type TUser = {
 	todos: string[];
 };
 
-const users: TUser[] = [];
+let users: TUser[] = [];
 
 type TAddRequest = {
 	name: string;
 	todo: string;
 };
 
-function find_user(name: string): TUser {
+function find_user(name: string): TUser | null {
 	for (const user of users) {
 		if (user.name === name) {
 			return user;
 		}
 	}
-	const new_user: TUser = {
-		name: name,
-		todos: [],
-	};
-	users.push(new_user);
-	return new_user;
+	return null;
 }
 
 router.post("/add", (request: Request, response: Response) => {
 	const request_body: TAddRequest = request.body;
 	if (request_body.name && request_body.todo) {
-		const user: TUser = find_user(request_body.name);
+		let user: TUser | null = find_user(request_body.name);
+		if (!user) {
+			user = {
+				name: request_body.name,
+				todos: [],
+			};
+			users.push(user);
+		}
 		user.todos.push(request_body.todo);
 		console.log(users);
 		response.send(`Todo added successfully for user ${request_body.name}.`);
@@ -42,16 +44,27 @@ router.post("/add", (request: Request, response: Response) => {
 
 router.get("/todos/:id", (request: Request, response: Response) => {
 	const name = request.params.id;
-	let todos: string[] | undefined = undefined;
-	for (const user of users) {
-		if (name === user.name) {
-			todos = user.todos;
-		}
-	}
-
-	if (todos !== undefined) {
-		response.send(todos);
+	let user: TUser | null = find_user(name);
+	if (user) {
+		response.send(user.todos);
 	} else {
+		response.send("User not found");
+	}
+});
+
+router.delete("/delete", (request: Request, response: Response) => {
+	const name: string = request.body;
+	console.log(name);
+	const found_user: TUser | null = find_user(name);
+	if (found_user) {
+		users = users.filter((user: TUser) => {
+			return user.name !== found_user.name;
+		});
+		console.log(users);
+		response.statusCode = 200;
+		response.send("User deleted successfully");
+	} else {
+		response.statusCode = 404;
 		response.send("User not found");
 	}
 });
