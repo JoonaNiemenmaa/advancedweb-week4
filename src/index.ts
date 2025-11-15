@@ -69,4 +69,38 @@ router.delete("/delete", (request: Request, response: Response) => {
 	}
 });
 
+function find_todo(user: TUser, query: string): number | null {
+	for (let i = 0; i < user.todos.length; i++) {
+		if (user.todos[i] === query) {
+			return i;
+		}
+	}
+	return null;
+}
+
+type TUpdateRequest = {
+	name: string;
+	todo: string;
+};
+
+router.put("/update", (request: Request, response: Response) => {
+	const request_body: TUpdateRequest = request.body;
+
+	let user: TUser | null = find_user(request_body.name);
+
+	if (user) {
+		let todo_index: number | null = find_todo(user, request_body.todo);
+		if (todo_index !== null) {
+			user.todos.splice(todo_index);
+			response.send("Todo deleted successfully.");
+		} else {
+			response.send("Todo not found");
+		}
+	} else {
+		response.send("User not found");
+	}
+
+	console.log(users);
+});
+
 export default router;

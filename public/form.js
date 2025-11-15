@@ -9,7 +9,7 @@ const todo_paragraph = document.getElementById("todo_paragraph");
 const search_paragraph = document.getElementById("search_paragraph");
 
 const delete_button = document.getElementById("deleteUser");
-const todo_list = document.getElementById("todo_list");
+const todo_list = document.getElementById("todoList");
 
 todo_form.addEventListener("submit", async (event) => {
 	event.preventDefault();
@@ -41,16 +41,45 @@ todo_form.addEventListener("submit", async (event) => {
 	todo_paragraph.innerText = response;
 });
 
+let user = "";
+
 function display_todos(todos) {
 	todo_list.innerHTML = "";
+	let i = 0;
 	for (const todo of todos) {
 		const li = document.createElement("li");
 		li.innerText = todo;
+		li.classList.add("delete-task");
+
+		li.addEventListener("click", async (event) => {
+			event.preventDefault();
+
+			const url = "http://localhost:3000/update";
+			const options = {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					name: user,
+					todo: todo,
+				}),
+			};
+
+			const response = await fetch(url, options);
+
+			if (response.ok) {
+				const text = await response.text();
+				todo_list.removeChild(li);
+				search_paragraph.innerText = text;
+			}
+		});
+
 		todo_list.appendChild(li);
+
+		i++;
 	}
 }
-
-let user = "";
 
 delete_button.addEventListener("click", async (event) => {
 	const url = "http://localhost:3000/delete";
