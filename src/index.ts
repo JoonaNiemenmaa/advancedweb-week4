@@ -2,8 +2,42 @@ import { Router, Request, Response } from "express";
 
 const router = Router();
 
-router.get("/", (request: Request, response: Response) => {
-	response.send("<h1>It's working!</h1>");
+type TUser = {
+	name: string;
+	todos: string[];
+};
+
+const users: TUser[] = [];
+
+type TAddRequest = {
+	name: string;
+	todo: string;
+};
+
+function find_user(name: string): TUser {
+	for (const user of users) {
+		if (user.name === name) {
+			return user;
+		}
+	}
+	const new_user: TUser = {
+		name: name,
+		todos: [],
+	};
+	users.push(new_user);
+	return new_user;
+}
+
+router.post("/add", (request: Request, response: Response) => {
+	const request_body: TAddRequest = request.body;
+	if (request_body.name && request_body.todo) {
+		const user: TUser = find_user(request_body.name);
+		user.todos.push(request_body.todo);
+		console.log(users);
+		response.send(`Todo added successfully for user ${request_body.name}.`);
+	} else {
+		response.send(`Todo or user name cannot be empty!`);
+	}
 });
 
 export default router;
