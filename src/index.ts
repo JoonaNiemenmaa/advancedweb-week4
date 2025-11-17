@@ -1,4 +1,5 @@
-import { Router, Request, Response, response } from "express";
+import { Router, Request, Response } from "express";
+import fs from "fs"
 
 const router = Router();
 
@@ -7,7 +8,26 @@ type TUser = {
 	todos: string[];
 };
 
-let users: TUser[] = [];
+
+const FILENAME = "data.json";
+
+function read_users(): TUser[] {
+	try {
+		fs.accessSync(FILENAME)
+		const contents: TUser[] = JSON.parse(fs.readFileSync(FILENAME, "utf8"));
+		console.log(contents);
+		return contents;
+	} catch (err) {
+		console.log(err);
+		return [];
+	}
+}
+
+let users: TUser[] = read_users();
+
+async function write_users() {
+	fs.writeFile(FILENAME, JSON.stringify(users), (err) => { console.log(err) })
+}
 
 type TAddRequest = {
 	name: string;
@@ -35,6 +55,7 @@ router.post("/add", (request: Request, response: Response) => {
 			users.push(user);
 		}
 		user.todos.push(request_body.todo);
+		write_users();
 		console.log(users);
 		response.send(`Todo added successfully for user ${request_body.name}.`);
 	} else {
@@ -60,6 +81,7 @@ router.delete("/delete", (request: Request, response: Response) => {
 		users = users.filter((user: TUser) => {
 			return user.name !== found_user.name;
 		});
+		write_users();
 		console.log(users);
 		response.statusCode = 200;
 		response.send("User deleted successfully");
@@ -92,6 +114,7 @@ router.put("/update", (request: Request, response: Response) => {
 		let todo_index: number | null = find_todo(user, request_body.todo);
 		if (todo_index !== null) {
 			user.todos.splice(todo_index);
+			write_users();
 			response.send("Todo deleted successfully.");
 		} else {
 			response.send("Todo not found");
